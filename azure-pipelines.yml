@@ -36,7 +36,7 @@ stages:
             inputs:
               gradleWrapperFile: "gradlew"
               tasks: "build"
-              options: "--build-cache -Dspring.profiles.active=test -DADMIN_EMAILS=$(ADMIN_EMAILS)"
+              options: "--build-cache -Dspring.profiles.active=test"
               publishJUnitResults: true
               testResultsFiles: "**/TEST-*.xml"
               javaHomeOption: "JDKVersion"
@@ -69,7 +69,7 @@ stages:
           - task: Docker@2
             inputs:
               command: buildAndPush
-              repository: appechobeacon
+              repository: applifeshift
               tags: |
                 latest
                 $(Build.BuildId)
@@ -102,8 +102,8 @@ stages:
                 ACR_PASSWORD="$(ACR_PASSWORD)"
 
                 # Nome do container e DNS
-                APP_CONTAINER_NAME="aci-app-echobeacon-rm$(RM)"
-                APP_DNS_LABEL="aci-app-echobeacon-rm$(RM)"
+                APP_CONTAINER_NAME="aci-app-lifeshift-rm$(RM)"
+                APP_DNS_LABEL="aci-app-lifeshift-rm$(RM)"
 
                 # Excluir container anterior (para liberar DNS)
                 echo "Cleaning up previous container if it exists..."
