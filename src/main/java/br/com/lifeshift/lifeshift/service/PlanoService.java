@@ -1,6 +1,5 @@
 package br.com.lifeshift.lifeshift.service;
 
-import br.com.lifeshift.lifeshift.config.RabbitMQConfiguration;
 import br.com.lifeshift.lifeshift.dto.PlanoRequestDTO;
 import br.com.lifeshift.lifeshift.dto.PlanoResponseDTO;
 import br.com.lifeshift.lifeshift.exception.BusinessException;
@@ -13,8 +12,6 @@ import br.com.lifeshift.lifeshift.repository.PlanoRepository;
 import br.com.lifeshift.lifeshift.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -34,45 +31,13 @@ public class PlanoService {
     private final PerfilRepository perfilRepository;
     private final UsuarioRepository usuarioRepository;
     private final GroqAIService groqAIService;
-    
-    @Autowired(required = false)
-    private RabbitTemplate rabbitTemplate;
 
     @Transactional
     @CacheEvict(value = "planos", allEntries = true)
     public PlanoResponseDTO gerarPlanoAssicrono(PlanoRequestDTO request, String userEmail) {
-        log.info("Enviando requisição para fila: geração de plano para perfil ID: {}", request.getPerfilId());
-
-        Usuario usuario = usuarioRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario", "email", userEmail));
-
-        Perfil perfil = perfilRepository.findById(request.getPerfilId())
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil", "id", request.getPerfilId()));
-
-        // Verifica se o perfil pertence ao usuário
-        if (!perfil.getUsuario().getId().equals(usuario.getId())) {
-            throw new BusinessException("Perfil não pertence ao usuário autenticado");
-        }
-
-        // Envia para fila RabbitMQ se disponível
-        if (rabbitTemplate != null) {
-            rabbitTemplate.convertAndSend(
-                    RabbitMQConfiguration.PLANO_EXCHANGE,
-                    RabbitMQConfiguration.PLANO_ROUTING_KEY,
-                    request
-            );
-            log.info("Requisição enviada para fila com sucesso");
-        } else {
-            log.warn("RabbitMQ não disponível - processamento assíncrono desabilitado");
-        }
-
-        // Retorna resposta imediata
-        return PlanoResponseDTO.builder()
-                .titulo("Plano em Processamento")
-                .descricao("Seu plano de requalificação está sendo gerado pela IA. Em breve estará disponível.")
-                .usuarioId(usuario.getId())
-                .usuarioNome(usuario.getNome())
-                .build();
+        log.info("Gerando plano de forma síncrona (RabbitMQ removido) para perfil ID: {}", request.getPerfilId());
+        // Por enquanto, chama o método síncrono diretamente
+        return gerarPlanoSincrono(request, userEmail);
     }
 
     @Transactional
