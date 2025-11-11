@@ -1,0 +1,142 @@
+trigger:
+  - main
+
+variables:
+  GRADLE_USER_HOME: $(Pipeline.Workspace)/.gradle
+  AZURE_LOCATION: eastus
+  RESOURCE_GROUP: rg-lifeshift
+  ACR_NAME: acrlifeshift
+  ACR_LOGIN_SERVER: acrlifeshift.azurecr.io
+  IMAGE_NAME: applifeshift
+  IMAGE_TAG: latest
+  RM: "556859"
+  azureSubscription: Azurelifeshift
+  DB_NAME: lifeshift
+  DB_USER: lifeshift
+
+stages:
+  - stage: Build
+    displayName: CI (build & tests)
+    jobs:
+      - job: gradleBuild
+        pool:
+          vmImage: ubuntu-latest
+
+        steps:
+          - task: Cache@2
+            inputs:
+              key: 'gradle | "$(Agent.OS)" | **/*.gradle*'
+              restoreKeys: |
+                gradle | "$(Agent.OS)"
+                gradle
+              path: $(GRADLE_USER_HOME)
+            displayName: Configure gradle caching
+
+          - task: Gradle@4
+            inputs:
+              gradleWrapperFile: "gradlew"
+              tasks: "build"
+              options: "--build-cache -Dspring.profiles.active=test -DADMIN_EMAILS=$(ADMIN_EMAILS)"
+              publishJUnitResults: true
+              testResultsFiles: "**/TEST-*.xml"
+              javaHomeOption: "JDKVersion"
+              sonarQubeRunAnalysis: false
+
+          - script: ./gradlew --stop
+            displayName: Gradlew stop
+
+          - task: CopyFiles@2
+            displayName: "Copy Files to artifact staging directory"
+            inputs:
+              SourceFolder: "$(System.DefaultWorkingDirectory)"
+              Contents: "**/build/libs/*SNAPSHOT.jar"
+              TargetFolder: $(Build.ArtifactStagingDirectory)
+
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: lifeshiftApp
+
+      - job: BuildAndPushImage
+        displayName: Build and push docker image
+        pool:
+          vmImage: ubuntu-latest
+        dependsOn: gradleBuild
+        condition: succeeded()
+        steps:
+          - task: Docker@2
+            inputs:
+              command: login
+              containerRegistry: lifeshiftservice556859
+          - task: Docker@2
+            inputs:
+              command: buildAndPush
+              repository: appechobeacon
+              tags: |
+                latest
+                $(Build.BuildId)
+
+  - stage: Deploy_ACI
+    displayName: CD - Deploy to Azure Container Instances
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: Deploy
+        displayName: Deploy App to ACI
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: none
+
+          - task: AzureCLI@2
+            displayName: 'Deploy Application to ACI'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -euo pipefail
+
+                echo "Using resource group: $(RESOURCE_GROUP) in $(AZURE_LOCATION)"
+
+                # Obter credenciais do ACR existente
+                ACR_USERNAME="$(ACR_USERNAME)"
+                ACR_PASSWORD="$(ACR_PASSWORD)"
+
+                # Nome do container e DNS
+                APP_CONTAINER_NAME="aci-app-echobeacon-rm$(RM)"
+                APP_DNS_LABEL="aci-app-echobeacon-rm$(RM)"
+
+                # Excluir container anterior (para liberar DNS)
+                echo "Cleaning up previous container if it exists..."
+                az container delete --resource-group "$(RESOURCE_GROUP)" --name "$APP_CONTAINER_NAME" --yes || true
+                sleep 10
+
+                # Criar container da aplicação
+                APP_IMAGE="$(ACR_LOGIN_SERVER)/$(IMAGE_NAME):$(IMAGE_TAG)"
+                echo "Deploying application container: $APP_CONTAINER_NAME"
+
+                az container create \
+                  --resource-group "$(RESOURCE_GROUP)" \
+                  --name "$APP_CONTAINER_NAME" \
+                  --image "$APP_IMAGE" \
+                  --cpu 1 --memory 1 \
+                  --registry-login-server "$(ACR_LOGIN_SERVER)" \
+                  --registry-username "$ACR_USERNAME" \
+                  --registry-password "$ACR_PASSWORD" \
+                  --environment-variables \
+                    SPRING_DATASOURCE_URL="$(SPRING_DATASOURCE_URL)" \
+                    SPRING_DATASOURCE_USERNAME="$(DB_USER)" \
+                    SPRING_DATASOURCE_PASSWORD="$(DB_PASSWORD)" \
+                    SPRING_JPA_HIBERNATE_DDL_AUTO=update \
+                    SPRING_FLYWAY_URL="$(SPRING_DATASOURCE_URL)" \
+                    SPRING_FLYWAY_USER="$(DB_USER)" \
+                    SPRING_FLYWAY_PASSWORD="$(DB_PASSWORD)" \
+                    GOOGLE_CLIENT_ID="$(GOOGLE_CLIENT_ID)" \
+                    GOOGLE_CLIENT_SECRET="$(GOOGLE_CLIENT_SECRET)" \
+                  --ports 8080 \
+                  --os-type Linux \
+                  --dns-name-label "$APP_DNS_LABEL" \
+                  --location "$(AZURE_LOCATION)" \
+                  --restart-policy always
+
+                APP_URL="http://$APP_DNS_LABEL.$(AZURE_LOCATION).azurecontainer.io:8080"
+                echo "✅ Application deployed at: $APP_URL"
