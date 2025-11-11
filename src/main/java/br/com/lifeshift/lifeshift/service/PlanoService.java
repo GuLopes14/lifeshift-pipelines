@@ -14,6 +14,7 @@ import br.com.lifeshift.lifeshift.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -33,7 +34,9 @@ public class PlanoService {
     private final PerfilRepository perfilRepository;
     private final UsuarioRepository usuarioRepository;
     private final GroqAIService groqAIService;
-    private final RabbitTemplate rabbitTemplate;
+    
+    @Autowired(required = false)
+    private RabbitTemplate rabbitTemplate;
 
     @Transactional
     @CacheEvict(value = "planos", allEntries = true)
@@ -51,14 +54,17 @@ public class PlanoService {
             throw new BusinessException("Perfil não pertence ao usuário autenticado");
         }
 
-        // Envia para fila RabbitMQ
-        rabbitTemplate.convertAndSend(
-                RabbitMQConfiguration.PLANO_EXCHANGE,
-                RabbitMQConfiguration.PLANO_ROUTING_KEY,
-                request
-        );
-
-        log.info("Requisição enviada para fila com sucesso");
+        // Envia para fila RabbitMQ se disponível
+        if (rabbitTemplate != null) {
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfiguration.PLANO_EXCHANGE,
+                    RabbitMQConfiguration.PLANO_ROUTING_KEY,
+                    request
+            );
+            log.info("Requisição enviada para fila com sucesso");
+        } else {
+            log.warn("RabbitMQ não disponível - processamento assíncrono desabilitado");
+        }
 
         // Retorna resposta imediata
         return PlanoResponseDTO.builder()
