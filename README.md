@@ -19,7 +19,6 @@
 - Gabriel Santos Jablonski - RM: 555452
 - Gustavo Lopes Santos da Silva - RM: 556859
 - Renato de Freitas David Campiteli - RM: 555627
-- Samuel Heitor Maragato - RM: 556731
 
 ## 📋 Índice
 
@@ -33,8 +32,6 @@
 - [Internacionalização](#internacionalização)
 - [Impacto Social](#impacto-social)
 - [Diferenciais](#diferenciais)
-- [Contribuindo](#contribuindo)
-- [Licença](#licença)
 
 ---
 
@@ -101,7 +98,6 @@ O usuário visualiza seu plano em uma interface amigável, podendo:
 ### 6️⃣ **Otimização e Desempenho**
 O sistema utiliza:
 - 🚀 **Spring Cache** para armazenar planos repetidos
-- 📨 **RabbitMQ** para processar tarefas de forma assíncrona
 - ⚡ Melhorando desempenho e escalabilidade
 
 ---
@@ -129,10 +125,8 @@ O sistema utiliza:
 - **Spring Security**: Controle de acesso
 - **Validação**: Bean Validation (Jakarta)
 
-### Mensageria e Cache
-- **Message Broker**: RabbitMQ (AMQP)
+### Cache
 - **Caching**: Spring Boot Starter Cache
-- **Processamento Assíncrono**: Spring AMQP
 
 ### Frontend
 - **Template Engine**: Thymeleaf
@@ -181,12 +175,6 @@ GOOGLE_CLIENT_SECRET=seu_client_secret_aqui
 GROQ_API_KEY=sua_groq_api_key_aqui
 GROQ_API_URL=https://api.groq.com/openai/v1/chat/completions
 GROQ_MODEL=llama-3.3-70b-versatile
-
-# RabbitMQ
-RABBITMQ_HOST=localhost
-RABBITMQ_PORT=5672
-RABBITMQ_USERNAME=guest
-RABBITMQ_PASSWORD=guest
 ```
 
 ### 3. Inicie os Serviços com Docker Compose
@@ -197,7 +185,6 @@ docker-compose up -d
 
 Este comando inicia:
 - 🐘 **PostgreSQL 16**
-- 🐰 **RabbitMQ 3** (com Management UI em http://localhost:15672)
 
 ### 4. Execute a Aplicação
 
@@ -312,10 +299,6 @@ src/main/resources/
     └────────┬──────────────┘
              │
     ┌────────▼──────────────────┐
-    │   RabbitMQ (Async Tasks)   │
-    └────────┬──────────────────┘
-             │
-    ┌────────▼──────────────────┐
     │   PostgreSQL Database      │
     │   (Persist Data)           │
     └────────────────────────────┘
@@ -407,11 +390,6 @@ A proposta reforça o compromisso com os **Objetivos de Desenvolvimento Sustent�
 - Mensagens localizadas
 - Interface responsiva
 
-⚡ **Processamento Assíncrono**
-- RabbitMQ para tarefas em background
-- Geração de planos sem bloquear UI
-- Escalabilidade garantida
-
 💾 **Cache Inteligente**
 - Spring Cache para performance
 - Reutilização de planos similares
@@ -430,7 +408,6 @@ A proposta reforça o compromisso com os **Objetivos de Desenvolvimento Sustent�
 |-------------|--------|----------|
 | Spring Boot | 3.5.7 | Framework web |
 | PostgreSQL | 16 | Banco de dados |
-| RabbitMQ | 3.x | Message broker |
 | Spring Security | - | Autenticação OAuth2 |
 | Spring Data JPA | - | Persistência de dados |
 | Flyway | - | Versionamento de banco |
@@ -440,50 +417,6 @@ A proposta reforça o compromisso com os **Objetivos de Desenvolvimento Sustent�
 
 ---
 
-## 🤝 Contribuindo
-
-Queremos sua ajuda para melhorar o LifeShift!
-
-### Passos para Contribuir:
-
-1. **Fork** o repositório
-2. **Crie uma branch** para sua feature (`git checkout -b feature/AmazingFeature`)
-3. **Commit** suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** para a branch (`git push origin feature/AmazingFeature`)
-5. **Abra um Pull Request**
-
-### Diretrizes:
-- Siga o padrão de código do projeto
-- Adicione testes para novas funcionalidades
-- Atualize a documentação conforme necessário
-- Respeite o Code of Conduct
-
----
-
-## 📝 Licença
-
-Este projeto está licenciado sob a **MIT License** - veja o arquivo [LICENSE](LICENSE) para detalhes.
-
----
-
-## 👥 Autores
-
-**Desenvolvido para a Global Solution FIAP 2025/2**
-
-- **Gustavo Lopes** — [@GuLopes14](https://github.com/GuLopes14)
-
----
-
-## 📞 Suporte
-
-Tem dúvidas ou encontrou um problema?
-
-- 📧 **Email**: [seu-email@exemplo.com]
-- 🐛 **Reportar Bug**: [Abrir uma Issue](https://github.com/GuLopes14/Lifeshift-mvc/issues)
-- 💡 **Sugerir Feature**: [Abrir uma Discussion](https://github.com/GuLopes14/Lifeshift-mvc/discussions)
-- 📚 **Documentação**: [Docs Completa](#)
-
----
 
 ## 🎉 Conclusão
 
