@@ -39,7 +39,7 @@
 
 **LifeShift** é uma plataforma web inteligente desenvolvida para apoiar pessoas na **requalificação profissional** e **transição de carreira**, utilizando **Inteligência Artificial (IA)** para criar trilhas personalizadas de aprendizado de forma **acessível e inclusiva**.
 
-Criado como solução para a **Global Solution FIAP 2025/2** — com o tema *"O Futuro do Trabalho: Educação, Inclusão e Tecnologia"* — o LifeShift atende uma necessidade crescente no mercado contemporâneo: ajudar profissionais em diferentes estágios de suas carreiras a se adaptarem às novas demandas tecnológicas e sociais do mundo do trabalho.
+Criado como solução para a **Global Solution FIAP 2025/2** com o tema *"O Futuro do Trabalho: Educação, Inclusão e Tecnologia"* o LifeShift atende uma necessidade crescente no mercado contemporâneo: ajudar profissionais em diferentes estágios de suas carreiras a se adaptarem às novas demandas tecnológicas e sociais do mundo do trabalho.
 
 ---
 
